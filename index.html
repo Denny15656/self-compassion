@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#161D1B">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="じぶんにやさしく">
+<title>じぶんにやさしく — セルフコンパッション・ジャーナル</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#161D1B;
+    --surface:#1F2825;
+    --ink:#E4EAE7;
+    --muted:#8C9893;
+    --line:#2E3A35;
+    --accent:#84B5A2;
+    --accent-deep:#6FA28F;
+    --accent-soft:#243430;
+    --on-accent:#0E1714;
+    --warm:#D9A283;
+    --warm-soft:#3A2A22;
+    --ai:#9AA0E0;
+    --ai-soft:#23263B;
+    --toast-bg:#2B3733;
+    --shadow:0 1px 2px rgba(0,0,0,.25), 0 10px 34px rgba(0,0,0,.35);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans JP",system-ui,sans-serif;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    padding:0 18px 80px;
+  }
+  .wrap{max-width:660px;margin:0 auto;}
+
+  /* Header */
+  header{padding:46px 0 26px;text-align:center;}
+  .brand{
+    font-family:"Zen Maru Gothic",serif;
+    font-weight:500;font-size:25px;letter-spacing:.04em;
+    color:var(--ink);margin:0;
+  }
+  .brand .dot{color:var(--accent);}
+  .tagline{font-size:13px;color:var(--muted);margin:8px 0 0;letter-spacing:.02em;}
+  .datebar{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    margin-top:18px;font-size:13px;color:var(--muted);
+  }
+  .datebar input{
+    border:none;background:transparent;color:var(--ink);
+    font-family:inherit;font-size:13px;text-align:center;
+  }
+
+  /* Path of steps */
+  .path{position:relative;margin:8px 0 0;}
+  .path::before{
+    content:"";position:absolute;left:13px;top:14px;bottom:34px;
+    width:2px;background:var(--line);
+  }
+  .step{position:relative;padding:0 0 22px 44px;}
+  .node{
+    position:absolute;left:4px;top:6px;width:20px;height:20px;border-radius:50%;
+    background:var(--surface);border:2px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    transition:background .25s ease,border-color .25s ease,transform .25s ease;z-index:1;
+  }
+  .node svg{width:11px;height:11px;opacity:0;transform:scale(.6);transition:opacity .2s ease,transform .2s ease;}
+  .step.filled .node{background:var(--accent);border-color:var(--accent);}
+  .step.filled .node svg{opacity:1;transform:scale(1);}
+  .step.filled.kindness .node{background:var(--warm);border-color:var(--warm);}
+  .step.filled.ai-response .node{background:var(--ai);border-color:var(--ai);}
+
+  .card{
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);
+    transition:border-color .2s ease;
+  }
+  .card:focus-within{border-color:var(--accent);}
+  .eyebrow{
+    font-size:11px;letter-spacing:.18em;color:var(--accent);
+    font-weight:500;text-transform:uppercase;
+  }
+  .step.kindness .eyebrow{color:var(--warm);}
+  .step.ai-response .eyebrow{color:var(--ai);}
+  .step.ai-response .card:focus-within{border-color:var(--ai);}
+  .ai-badge{font-size:10px;color:var(--ai);border:1px solid var(--ai-soft);
+    background:var(--ai-soft);border-radius:20px;padding:1px 8px;letter-spacing:.04em;}
+  .label{
+    font-family:"Zen Maru Gothic",serif;font-weight:500;font-size:17px;
+    margin:2px 0 0;display:flex;align-items:center;gap:7px;
+  }
+  .req{font-size:10px;color:var(--warm);border:1px solid var(--warm-soft);
+    background:var(--warm-soft);border-radius:20px;padding:1px 8px;letter-spacing:.04em;}
+  .opt{font-size:10px;color:var(--muted);border:1px solid var(--line);
+    border-radius:20px;padding:1px 8px;letter-spacing:.04em;}
+  .help{font-size:12.5px;color:var(--muted);margin:6px 0 10px;}
+  textarea{
+    width:100%;border:none;background:transparent;resize:vertical;
+    font-family:inherit;font-size:15px;line-height:1.8;color:var(--ink);
+    min-height:62px;padding:0;
+  }
+  .step.ai-response textarea{min-height:120px;}
+  textarea:focus{outline:none;}
+  textarea::placeholder{color:#56635E;}
+
+  /* Actions */
+  .actions{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:12px;
+    font-size:15px;transition:transform .12s ease,background .2s ease,opacity .2s ease;}
+  button:active{transform:translateY(1px);}
+  .btn-primary{
+    background:var(--accent-deep);color:var(--on-accent);font-weight:700;padding:15px;
+    display:flex;align-items:center;justify-content:center;gap:9px;
+  }
+  .btn-primary:hover{background:var(--accent);}
+  .btn-row{display:flex;gap:10px;}
+  .btn-ghost{
+    flex:1;background:var(--surface);color:var(--ink);border:1px solid var(--line);
+    padding:13px;font-size:14px;
+  }
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-deep);}
+
+  /* History */
+  .history{margin-top:40px;}
+  .history h2{
+    font-family:"Zen Maru Gothic",serif;font-weight:500;font-size:16px;
+    display:flex;align-items:center;justify-content:space-between;margin:0 0 14px;
+  }
+  .history h2 .count{font-size:12px;color:var(--muted);font-family:"Noto Sans JP";}
+  .entry{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:13px 15px;margin-bottom:9px;cursor:pointer;transition:border-color .2s ease;
+  }
+  .entry:hover{border-color:var(--accent);}
+  .entry .e-date{font-size:11px;color:var(--accent);letter-spacing:.04em;}
+  .entry .e-snip{font-size:14px;color:var(--ink);margin-top:3px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .empty{font-size:13px;color:var(--muted);text-align:center;padding:18px;
+    border:1px dashed var(--line);border-radius:14px;}
+  .backup{display:flex;gap:14px;justify-content:center;margin-top:16px;}
+  .backup a{font-size:12px;color:var(--muted);cursor:pointer;text-decoration:underline;
+    text-underline-offset:3px;}
+  .backup a:hover{color:var(--accent-deep);}
+
+  /* Toast */
+  .toast{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+    background:var(--toast-bg);color:var(--ink);padding:12px 20px;border-radius:30px;font-size:13.5px;
+    opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:50;
+    box-shadow:0 8px 30px rgba(0,0,0,.4);border:1px solid var(--line);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;
+    align-items:flex-end;justify-content:center;z-index:60;}
+  .overlay.show{display:flex;}
+  .modal{background:var(--bg);width:100%;max-width:660px;max-height:88vh;overflow:auto;
+    border-radius:20px 20px 0 0;padding:22px 20px 30px;}
+  .modal h3{font-family:"Zen Maru Gothic";font-weight:500;font-size:16px;margin:0 0 4px;}
+  .modal .m-date{font-size:12px;color:var(--accent);margin-bottom:16px;}
+  .m-field{margin-bottom:14px;}
+  .m-field .m-label{font-size:12px;color:var(--muted);letter-spacing:.04em;margin-bottom:3px;}
+  .m-field .m-body{font-size:14.5px;white-space:pre-wrap;}
+  .modal-actions{display:flex;gap:10px;margin-top:8px;}
+  .modal-actions button{flex:1;padding:13px;font-size:14px;}
+  .btn-load{background:var(--accent-deep);color:var(--on-accent);font-weight:700;}
+  .btn-del{background:var(--surface);color:#E2917A;border:1px solid var(--warm-soft);}
+  .btn-close{background:var(--surface);color:var(--muted);border:1px solid var(--line);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+  @media (max-width:480px){
+    header{padding:34px 0 20px;}
+    .brand{font-size:22px;}
+    .step{padding-left:40px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="brand">じぶんにやさしく<span class="dot">.</span></h1>
+    <p class="tagline">セルフコンパッション・ジャーナル</p>
+    <div class="datebar">
+      <span>記録日</span>
+      <input type="date" id="entryDate">
+    </div>
+  </header>
+
+  <div class="path" id="path">
+    <!-- Step 1 -->
+    <section class="step" data-step="event">
+      <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="card">
+        <div class="eyebrow">step 1 ／ 気づく</div>
+        <div class="label">出来事 <span class="req">必須</span></div>
+        <p class="help">ネガティブな気持ちになった出来事を、事実として書き出してみましょう。</p>
+        <textarea data-field="event" placeholder="例：留学先の大学やインターの高校の動画を見て、自分が得られなかった学生時代を思った。"></textarea>
+      </div>
+    </section>
+
+    <!-- Step 2 -->
+    <section class="step" data-step="emotion">
+      <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="card">
+        <div class="eyebrow">step 2 ／ 名づける</div>
+        <div class="label">感情 <span class="req">必須</span></div>
+        <p class="help">いま感じている感情に、できるだけ正確な名前をつけてみましょう。</p>
+        <textarea data-field="emotion" placeholder="例：喪失への怒り、失望、嫉妬"></textarea>
+      </div>
+    </section>
+
+    <!-- Step 3 -->
+    <section class="step" data-step="common">
+      <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="card">
+        <div class="eyebrow">step 3 ／ つながる</div>
+        <div class="label">他者との共通性 <span class="req">必須</span></div>
+        <p class="help">同じような経験や反応をする人は、ほかにもいます。その共通点を書いてみましょう。</p>
+        <textarea data-field="common" placeholder="例：「あれがあったら」と思う気持ちは、容姿でも経済力でも才能でも、誰もが持っている。"></textarea>
+      </div>
+    </section>
+
+    <!-- Step 4 (reframed from "irrational thinking") -->
+    <section class="step" data-step="balance">
+      <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="card">
+        <div class="eyebrow">step 4 ／ ととのえる</div>
+        <div class="label">バランスの取れた見方 <span class="opt">任意</span></div>
+        <p class="help">「自分だけが特別につらい」と感じていませんか。その気持ちを否定せず、それでも独りではない、という視点を書いてみましょう。</p>
+        <textarea data-field="balance" placeholder="例：自分の痛みは本物。けれど、見えないところで一生抱える痛みを持つ人も大勢いる。自分だけが呪われているわけではない。"></textarea>
+      </div>
+    </section>
+
+    <!-- Step 5 -->
+    <section class="step kindness" data-step="kindness">
+      <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="card">
+        <div class="eyebrow">step 5 ／ やさしくする</div>
+        <div class="label">自分への優しさ <span class="req">必須</span></div>
+        <p class="help">親しい友人にかけるように、自分に優しく理解のある言葉を書いてみましょう。</p>
+        <textarea data-field="kindness" placeholder="例：「あの時こうだったら」と思うのは当然だよ。つらい時間に使ったエネルギーは戻らない。喪失を感じていい。"></textarea>
+      </div>
+    </section>
+
+    <!-- Step 6 -->
+    <section class="step ai-response" data-step="aiResponse">
+      <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="card">
+        <div class="eyebrow">step 6 ／ 受けとる</div>
+        <div class="label">AIからの返答 <span class="ai-badge">任意</span></div>
+        <p class="help">「AIに渡す」でコピーしてAIに送り、返答が届いたらここに貼り付けてください。記録と一緒に保存されます。</p>
+        <textarea data-field="aiResponse" rows="6" placeholder="AIの返答をここに貼り付け…"></textarea>
+      </div>
+    </section>
+  </div>
+    <button class="btn-primary" id="copyBtn">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      AIに渡す（プロンプトごとコピー）
+    </button>
+    <div class="btn-row">
+      <button class="btn-ghost" id="saveBtn">記録として保存</button>
+      <button class="btn-ghost" id="clearBtn">入力をクリア</button>
+    </div>
+  </div>
+
+  <section class="history">
+    <h2>これまでの記録 <span class="count" id="histCount"></span></h2>
+    <div id="histList"></div>
+    <div class="backup">
+      <a id="exportBtn">バックアップを書き出す</a>
+      <a id="importBtn">読み込む</a>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY_DRAFT="scj_draft", KEY_ENTRIES="scj_entries";
+  var FIELDS=["event","emotion","common","balance","kindness","aiResponse"];
+  var LABELS={event:"出来事",emotion:"感情",common:"他者との共通性",balance:"バランスの取れた見方",kindness:"自分への優しさ",aiResponse:"AIからの返答"};
+  var REQUIRED=["event","emotion","common","kindness"];
+  var areas={}, steps={};
+
+  document.querySelectorAll("textarea[data-field]").forEach(function(t){areas[t.dataset.field]=t;});
+  document.querySelectorAll(".step").forEach(function(s){steps[s.dataset.step]=s;});
+
+  var dateInput=document.getElementById("entryDate");
+
+  function todayStr(){
+    var d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+    return d.toISOString().slice(0,10);
+  }
+  function fmtDate(iso){
+    if(!iso) return "";
+    var p=iso.split("-"); return p[0]+"年"+(+p[1])+"月"+(+p[2])+"日";
+  }
+  function read(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+  // ---- draft ----
+  function loadDraft(){
+    var d=read(KEY_DRAFT,{});
+    FIELDS.forEach(function(f){areas[f].value=d[f]||"";});
+    dateInput.value=d.date||todayStr();
+    refreshNodes();
+  }
+  function saveDraft(){
+    var d={date:dateInput.value};
+    FIELDS.forEach(function(f){d[f]=areas[f].value;});
+    write(KEY_DRAFT,d);
+  }
+  function refreshNodes(){
+    FIELDS.forEach(function(f){
+      steps[f].classList.toggle("filled", areas[f].value.trim().length>0);
+    });
+  }
+
+  FIELDS.forEach(function(f){
+    areas[f].addEventListener("input",function(){refreshNodes();saveDraft();});
+  });
+  dateInput.addEventListener("change",saveDraft);
+
+  // ---- toast ----
+  var toast=document.getElementById("toast"), toastT;
+  function showToast(msg){
+    toast.textContent=msg; toast.classList.add("show");
+    clearTimeout(toastT); toastT=setTimeout(function(){toast.classList.remove("show");},2200);
+  }
+
+  // ---- build text for AI ----
+  function missingRequired(){
+    return REQUIRED.filter(function(f){return areas[f].value.trim()==="";});
+  }
+  function buildAIText(){
+    var lines=[];
+    lines.push("あなたはセルフコンパッション（自分への思いやり）の専門コーチです。以下は私が書いたジャーナルです。クリスティン・ネフのセルフコンパッションの3要素（①自分への優しさ ②共通の人間性 ③マインドフルネス）の観点から、私の洞察を深める手助けをしてください。");
+    lines.push("");
+    lines.push("お願い：");
+    lines.push("・まず私の感情を否定せず受けとめてください。安易な励ましや『もっと前向きに』は要りません。");
+    lines.push("・私が自分を責めていたり、自分の痛みを過小評価している箇所があれば、優しく指摘してください。");
+    lines.push("・そのうえで、私が見落としている視点や、自分にかけられる言葉を一緒に探してください。");
+    lines.push("");
+    lines.push("【私のジャーナル】");
+    FIELDS.forEach(function(f){
+      var v=areas[f].value.trim();
+      if(v){ lines.push("■ "+LABELS[f]); lines.push(v); lines.push(""); }
+    });
+    lines.push("（記録日："+fmtDate(dateInput.value)+"）");
+    return lines.join("\n");
+  }
+
+  document.getElementById("copyBtn").addEventListener("click",function(){
+    var miss=missingRequired();
+    if(miss.length){
+      showToast("未入力の必須項目：" + miss.map(function(f){return LABELS[f];}).join("、"));
+      return;
+    }
+    var text=buildAIText();
+    function done(){showToast("コピーしました。AIに貼り付けてください");}
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done,function(){fallbackCopy(text);done();});
+    }else{fallbackCopy(text);done();}
+  });
+  function fallbackCopy(text){
+    var ta=document.createElement("textarea");
+    ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{document.execCommand("copy");}catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  // ---- save entry ----
+  document.getElementById("saveBtn").addEventListener("click",function(){
+    var miss=missingRequired();
+    if(miss.length){
+      showToast("未入力の必須項目：" + miss.map(function(f){return LABELS[f];}).join("、"));
+      return;
+    }
+    var entries=read(KEY_ENTRIES,[]);
+    var e={id:Date.now(),date:dateInput.value};
+    FIELDS.forEach(function(f){e[f]=areas[f].value.trim();});
+    entries.unshift(e);
+    write(KEY_ENTRIES,entries);
+    renderHistory();
+    showToast("保存しました");
+  });
+
+  // ---- clear ----
+  document.getElementById("clearBtn").addEventListener("click",function(){
+    if(!confirm("入力中の内容を消去します。よろしいですか？（保存済みの記録は消えません）")) return;
+    FIELDS.forEach(function(f){areas[f].value="";});
+    dateInput.value=todayStr();
+    refreshNodes(); saveDraft();
+    showToast("クリアしました");
+  });
+
+  // ---- history ----
+  var histList=document.getElementById("histList"), histCount=document.getElementById("histCount");
+  function renderHistory(){
+    var entries=read(KEY_ENTRIES,[]);
+    histCount.textContent=entries.length?entries.length+"件":"";
+    if(!entries.length){
+      histList.innerHTML='<div class="empty">まだ記録はありません。最初の一歩をここに。</div>';
+      return;
+    }
+    histList.innerHTML="";
+    entries.forEach(function(e){
+      var div=document.createElement("div");
+      div.className="entry";
+      var snip=(e.event||"").replace(/\n/g," ");
+      var aiBadge=e.aiResponse?'<span style="font-size:10px;background:var(--ai-soft);color:var(--ai);border-radius:20px;padding:1px 7px;margin-left:6px;vertical-align:middle;">AI返答あり</span>':'';
+      div.innerHTML='<div class="e-date">'+fmtDate(e.date)+aiBadge+'</div><div class="e-snip"></div>';
+      div.querySelector(".e-snip").textContent=snip;
+      div.addEventListener("click",function(){openModal(e);});
+      histList.appendChild(div);
+    });
+  }
+
+  // ---- modal ----
+  var overlay=document.getElementById("overlay"), modal=document.getElementById("modal");
+  function openModal(e){
+    var html='<h3>記録の詳細</h3><div class="m-date">'+fmtDate(e.date)+'</div>';
+    FIELDS.forEach(function(f){
+      if(e[f]){
+        var body=document.createElement("div");
+        body.textContent=e[f];
+        if(f==="aiResponse"){
+          html+='<div class="m-field" style="background:var(--ai-soft);border-radius:10px;padding:10px 12px;margin-bottom:14px;">'+
+            '<div class="m-label" style="color:var(--ai);">'+LABELS[f]+'</div>'+
+            '<div class="m-body" style="font-size:14px;">'+body.innerHTML+'</div></div>';
+        }else{
+          html+='<div class="m-field"><div class="m-label">'+LABELS[f]+'</div><div class="m-body">'+body.innerHTML+'</div></div>';
+        }
+      }
+    });
+    html+='<div class="modal-actions">'+
+      '<button class="btn-load">編集に読み込む</button>'+
+      '<button class="btn-del">削除</button>'+
+      '<button class="btn-close">閉じる</button></div>';
+    modal.innerHTML=html;
+    modal.querySelector(".btn-load").addEventListener("click",function(){
+      dateInput.value=e.date;
+      FIELDS.forEach(function(f){areas[f].value=e[f]||"";});
+      refreshNodes(); saveDraft(); closeModal();
+      window.scrollTo({top:0,behavior:"smooth"});
+      showToast("編集欄に読み込みました");
+    });
+    modal.querySelector(".btn-del").addEventListener("click",function(){
+      if(!confirm("この記録を削除します。よろしいですか？")) return;
+      var entries=read(KEY_ENTRIES,[]).filter(function(x){return x.id!==e.id;});
+      write(KEY_ENTRIES,entries); renderHistory(); closeModal();
+      showToast("削除しました");
+    });
+    modal.querySelector(".btn-close").addEventListener("click",closeModal);
+    overlay.classList.add("show");
+  }
+  function closeModal(){overlay.classList.remove("show");}
+  overlay.addEventListener("click",function(e){if(e.target===overlay)closeModal();});
+
+  // ---- export / import ----
+  document.getElementById("exportBtn").addEventListener("click",function(){
+    var data={entries:read(KEY_ENTRIES,[]),exportedAt:new Date().toISOString()};
+    var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url; a.download="self-compassion-journal-backup.json";
+    a.click(); URL.revokeObjectURL(url);
+    showToast("バックアップを書き出しました");
+  });
+  var importFile=document.getElementById("importFile");
+  document.getElementById("importBtn").addEventListener("click",function(){importFile.click();});
+  importFile.addEventListener("change",function(){
+    var file=importFile.files[0]; if(!file) return;
+    var r=new FileReader();
+    r.onload=function(){
+      try{
+        var data=JSON.parse(r.result);
+        if(!data.entries||!Array.isArray(data.entries)) throw new Error();
+        var cur=read(KEY_ENTRIES,[]);
+        var ids={}; cur.forEach(function(x){ids[x.id]=1;});
+        data.entries.forEach(function(x){if(!ids[x.id])cur.push(x);});
+        cur.sort(function(a,b){return b.id-a.id;});
+        write(KEY_ENTRIES,cur); renderHistory();
+        showToast("読み込みました（"+data.entries.length+"件）");
+      }catch(e){showToast("ファイルを読み込めませんでした");}
+      importFile.value="";
+    };
+    r.readAsText(file);
+  });
+
+  // ---- init ----
+  loadDraft();
+  renderHistory();
+})();
+</script>
+</body>
+</html>
