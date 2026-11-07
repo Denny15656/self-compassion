@@ -100,6 +100,11 @@
     font-family:"Zen Maru Gothic",serif;font-weight:500;font-size:17px;
     margin:2px 0 0;display:flex;align-items:center;gap:7px;
   }
+  .sublabel{
+    font-family:"Zen Maru Gothic",serif;font-weight:500;font-size:15px;
+    margin:16px 0 0;display:flex;align-items:center;gap:7px;
+    padding-top:14px;border-top:1px solid var(--line);
+  }
   .req{font-size:10px;color:var(--warm);border:1px solid var(--warm-soft);
     background:var(--warm-soft);border-radius:20px;padding:1px 8px;letter-spacing:.04em;}
   .opt{font-size:10px;color:var(--muted);border:1px solid var(--line);
@@ -113,6 +118,33 @@
   .step.ai-response textarea{min-height:120px;}
   textarea:focus{outline:none;}
   textarea::placeholder{color:#56635E;}
+
+  /* Intensity slider */
+  .intensity{display:flex;align-items:center;gap:12px;margin-top:4px;}
+  .intensity input[type=range]{flex:1;accent-color:var(--accent);height:28px;}
+  .intensity .sval{
+    min-width:58px;text-align:right;font-size:14px;color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .intensity .sval.unset{color:#56635E;}
+  .intensity .sclear{
+    background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:20px;padding:2px 10px;font-size:11.5px;
+  }
+  .intensity .sclear:hover{border-color:var(--accent);color:var(--accent);}
+  .scale-hint{display:flex;justify-content:space-between;font-size:11px;color:#56635E;margin:-2px 70px 0 0;}
+  .compare{font-size:12.5px;color:var(--muted);margin-top:8px;min-height:1em;}
+  .compare b{color:var(--accent);font-weight:500;}
+
+  /* Thinking pattern chips */
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px;}
+  .chip{
+    background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:20px;padding:5px 12px;font-size:13px;line-height:1.4;
+  }
+  .chip:hover{border-color:var(--accent);color:var(--ink);}
+  .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);}
+  .chip:focus-visible,.sclear:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
   /* Actions */
   .actions{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
@@ -202,7 +234,7 @@
 
   <div class="path" id="path">
     <!-- Step 1 -->
-    <section class="step" data-step="event">
+    <section class="step" data-step="1">
       <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <div class="card">
         <div class="eyebrow">step 1 ／ 気づく</div>
@@ -213,60 +245,109 @@
     </section>
 
     <!-- Step 2 -->
-    <section class="step" data-step="emotion">
+    <section class="step" data-step="2">
       <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <div class="card">
         <div class="eyebrow">step 2 ／ 名づける</div>
         <div class="label">感情 <span class="req">必須</span></div>
         <p class="help">いま感じている感情に、できるだけ正確な名前をつけてみましょう。</p>
         <textarea data-field="emotion" placeholder="例：恥ずかしさ、自己嫌悪、落ち込み"></textarea>
+
+        <div class="sublabel">感情の強さ <span class="opt">任意</span></div>
+        <p class="help">いちばん強い感情は、0〜100でいうとどのくらいですか。</p>
+        <div class="intensity">
+          <input type="range" min="0" max="100" step="5" value="50" data-slider="intensityBefore" aria-label="感情の強さ">
+          <span class="sval unset" data-sval="intensityBefore">未入力</span>
+          <button type="button" class="sclear" data-sclear="intensityBefore">消す</button>
+        </div>
       </div>
     </section>
 
-    <!-- Step 3 -->
-    <section class="step" data-step="common">
+    <!-- Step 3 (new) -->
+    <section class="step" data-step="3">
       <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <div class="card">
-        <div class="eyebrow">step 3 ／ つながる</div>
+        <div class="eyebrow">step 3 ／ とらえる</div>
+        <div class="label">浮かんだ考え <span class="opt">任意</span></div>
+        <p class="help">そのとき頭に浮かんだ言葉を、そのまま書いてみましょう。正しいかどうかは気にしなくて大丈夫です。</p>
+        <textarea data-field="thought" placeholder="例：「みんなに見捨てられた」「自分はやっぱりダメだ」"></textarea>
+
+        <div class="sublabel">思考のクセ <span class="opt">任意</span></div>
+        <p class="help">当てはまりそうなものがあれば選んでみましょう。なくても大丈夫です。</p>
+        <div class="chips" id="chips"></div>
+      </div>
+    </section>
+
+    <!-- Step 4 -->
+    <section class="step" data-step="4">
+      <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="card">
+        <div class="eyebrow">step 4 ／ つながる</div>
         <div class="label">他者との共通性 <span class="req">必須</span></div>
         <p class="help">同じような経験や反応をする人は、ほかにもいます。その共通点を書いてみましょう。</p>
         <textarea data-field="common" placeholder="例：ミスをして落ち込むのは誰にでもあること。いつも完璧でいられる人はいない。"></textarea>
       </div>
     </section>
 
-    <!-- Step 4 (reframed from "irrational thinking") -->
-    <section class="step" data-step="balance">
+    <!-- Step 5 -->
+    <section class="step" data-step="5">
       <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <div class="card">
-        <div class="eyebrow">step 4 ／ ととのえる</div>
-        <div class="label">バランスの取れた見方 <span class="opt">任意</span></div>
-        <p class="help">「自分だけが特別につらい」と感じていませんか。その気持ちを否定せず、それでも独りではない、という視点を書いてみましょう。</p>
-        <textarea data-field="balance" placeholder="例：「自分はダメだ」と全部を否定したくなるけど、起きたのは「一つのミスをした」という事実だけ。同じ経験をした人は大勢いる。"></textarea>
+        <div class="eyebrow">step 5 ／ ととのえる</div>
+        <div class="label">その考えを支える事実 <span class="opt">任意</span></div>
+        <p class="help">浮かんだ考えが本当だと思える、実際の出来事は何ですか。</p>
+        <textarea data-field="evidenceFor" placeholder="例：メッセージを送って4時間、返事がなかった。"></textarea>
+
+        <div class="sublabel">その考えに合わない事実 <span class="opt">任意</span></div>
+        <p class="help">反対に、その考えとは合わない出来事はありますか。小さなことでも構いません。</p>
+        <textarea data-field="evidenceAgainst" placeholder="例：翌日、自分から話しかけてくれた人がいた。"></textarea>
+
+        <div class="sublabel">バランスの取れた見方 <span class="opt">任意</span></div>
+        <p class="help">両方の事実を並べたうえで、気持ちを否定せずに、もう一つの見方を書いてみましょう。</p>
+        <textarea data-field="balance" placeholder="例：返事がないのはつらいけれど、それは見捨てられたという証拠ではない。どう返せばいいか迷っている人もいる。"></textarea>
       </div>
     </section>
 
-    <!-- Step 5 -->
-    <section class="step kindness" data-step="kindness">
+    <!-- Step 6 -->
+    <section class="step kindness" data-step="6">
       <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <div class="card">
-        <div class="eyebrow">step 5 ／ やさしくする</div>
+        <div class="eyebrow">step 6 ／ やさしくする</div>
         <div class="label">自分への優しさ <span class="req">必須</span></div>
         <p class="help">親しい友人にかけるように、自分に優しく理解のある言葉を書いてみましょう。</p>
         <textarea data-field="kindness" placeholder="例：大切な友人が同じミスをしたら『誰だってあるよ』と言うはず。その言葉を、自分にもかけていい。"></textarea>
       </div>
     </section>
 
-    <!-- Step 6 -->
-    <section class="step ai-response" data-step="aiResponse">
+    <!-- Step 7 (new) -->
+    <section class="step" data-step="7">
       <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <div class="card">
-        <div class="eyebrow">step 6 ／ 受けとる</div>
+        <div class="eyebrow">step 7 ／ ふりかえる</div>
+        <div class="label">いまの感情の強さ <span class="opt">任意</span></div>
+        <p class="help">書き終えたいま、さっきの感情は0〜100でどのくらいですか。変わらなくても大丈夫です。</p>
+        <div class="intensity">
+          <input type="range" min="0" max="100" step="5" value="50" data-slider="intensityAfter" aria-label="いまの感情の強さ">
+          <span class="sval unset" data-sval="intensityAfter">未入力</span>
+          <button type="button" class="sclear" data-sclear="intensityAfter">消す</button>
+        </div>
+        <div class="compare" id="compare"></div>
+      </div>
+    </section>
+
+    <!-- Step 8 -->
+    <section class="step ai-response" data-step="8">
+      <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div class="card">
+        <div class="eyebrow">step 8 ／ 受けとる</div>
         <div class="label">AIからの返答 <span class="ai-badge">任意</span></div>
         <p class="help">「AIに渡す」でコピーしてAIに送り、返答が届いたらここに貼り付けてください。記録と一緒に保存されます。</p>
         <textarea data-field="aiResponse" rows="6" placeholder="AIの返答をここに貼り付け…"></textarea>
       </div>
     </section>
   </div>
+
+  <div class="actions">
     <button class="btn-primary" id="copyBtn">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       AIに渡す（プロンプトごとコピー）
@@ -298,15 +379,96 @@
 (function(){
   "use strict";
   var KEY_DRAFT="scj_draft", KEY_ENTRIES="scj_entries";
-  var FIELDS=["event","emotion","common","balance","kindness","aiResponse"];
-  var LABELS={event:"出来事",emotion:"感情",common:"他者との共通性",balance:"バランスの取れた見方",kindness:"自分への優しさ",aiResponse:"AIからの返答"};
+
+  // Text fields, in display order
+  var FIELDS=["event","emotion","thought","common","evidenceFor","evidenceAgainst","balance","kindness","aiResponse"];
+  var SLIDERS=["intensityBefore","intensityAfter"];
+  var LABELS={
+    event:"出来事",
+    emotion:"感情",
+    intensityBefore:"感情の強さ（書く前）",
+    thought:"浮かんだ考え",
+    distortions:"思考のクセ（自分で選んだもの）",
+    common:"他者との共通性",
+    evidenceFor:"その考えを支える事実",
+    evidenceAgainst:"その考えに合わない事実",
+    balance:"バランスの取れた見方",
+    kindness:"自分への優しさ",
+    intensityAfter:"いまの感情の強さ",
+    aiResponse:"AIからの返答"
+  };
   var REQUIRED=["event","emotion","common","kindness"];
-  var areas={}, steps={};
+
+  var DISTORTIONS=[
+    {id:"allOrNothing", name:"白か黒か", tip:"少しでも欠けると全部ダメだと感じる"},
+    {id:"overgeneral",  name:"いつも・みんな", tip:"一度のことを「いつも」「みんな」に広げる"},
+    {id:"mindReading",  name:"心の読みすぎ", tip:"相手の気持ちを、確かめずに悪く決めつける"},
+    {id:"fortune",      name:"悪い先読み", tip:"この先も悪くなると決めつける"},
+    {id:"filter",       name:"悪いところだけ見る", tip:"良かったことが目に入らない"},
+    {id:"discount",     name:"良いことの割り引き", tip:"うまくいったことを「たまたま」と流す"},
+    {id:"emotional",    name:"感情で決めつける", tip:"そう感じるから、そうに違いないと思う"},
+    {id:"should",       name:"「〜すべき」", tip:"できて当たり前、ちゃんとしなければと自分を縛る"},
+    {id:"labeling",     name:"レッテル貼り", tip:"「自分はダメな人間だ」と人ごと決める"},
+    {id:"personal",     name:"全部自分のせい", tip:"自分のせいではないことまで背負う"}
+  ];
+  var DIST_NAME={}; DISTORTIONS.forEach(function(d){DIST_NAME[d.id]=d.name;});
+
+  var areas={}, sliderEls={}, svalEls={};
+  var state={intensityBefore:null,intensityAfter:null,distortions:[]};
 
   document.querySelectorAll("textarea[data-field]").forEach(function(t){areas[t.dataset.field]=t;});
-  document.querySelectorAll(".step").forEach(function(s){steps[s.dataset.step]=s;});
-
+  document.querySelectorAll("input[data-slider]").forEach(function(s){sliderEls[s.dataset.slider]=s;});
+  document.querySelectorAll("[data-sval]").forEach(function(s){svalEls[s.dataset.sval]=s;});
+  var stepEls=Array.prototype.slice.call(document.querySelectorAll(".step"));
+  var chipsWrap=document.getElementById("chips");
+  var compareEl=document.getElementById("compare");
   var dateInput=document.getElementById("entryDate");
+
+  // ---- build chips ----
+  DISTORTIONS.forEach(function(d){
+    var b=document.createElement("button");
+    b.type="button"; b.className="chip"; b.textContent=d.name;
+    b.title=d.tip; b.dataset.dist=d.id; b.setAttribute("aria-pressed","false");
+    b.addEventListener("click",function(){
+      var i=state.distortions.indexOf(d.id);
+      if(i>=0) state.distortions.splice(i,1); else state.distortions.push(d.id);
+      renderChips(); refreshNodes(); saveDraft();
+    });
+    chipsWrap.appendChild(b);
+  });
+  function renderChips(){
+    chipsWrap.querySelectorAll(".chip").forEach(function(c){
+      c.setAttribute("aria-pressed", state.distortions.indexOf(c.dataset.dist)>=0 ? "true":"false");
+    });
+  }
+
+  // ---- sliders ----
+  function renderSlider(k){
+    var v=state[k];
+    if(v===null||v===undefined){
+      svalEls[k].textContent="未入力"; svalEls[k].classList.add("unset");
+      sliderEls[k].value=50;
+    }else{
+      svalEls[k].textContent=v+" / 100"; svalEls[k].classList.remove("unset");
+      sliderEls[k].value=v;
+    }
+  }
+  function renderCompare(){
+    var a=state.intensityBefore, b=state.intensityAfter;
+    if(a===null||b===null){compareEl.textContent="";return;}
+    var diff=a-b;
+    if(diff>0) compareEl.innerHTML="書く前 "+a+" → いま "+b+"　<b>"+diff+" ゆるみました</b>";
+    else if(diff<0) compareEl.textContent="書く前 "+a+" → いま "+b+"　いまは強く感じているんですね";
+    else compareEl.textContent="書く前 "+a+" → いま "+b+"　そのままでも大丈夫です";
+  }
+  SLIDERS.forEach(function(k){
+    sliderEls[k].addEventListener("input",function(){
+      state[k]=+sliderEls[k].value; renderSlider(k); renderCompare(); refreshNodes(); saveDraft();
+    });
+    document.querySelector('[data-sclear="'+k+'"]').addEventListener("click",function(){
+      state[k]=null; renderSlider(k); renderCompare(); refreshNodes(); saveDraft();
+    });
+  });
 
   function todayStr(){
     var d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
@@ -318,22 +480,37 @@
   }
   function read(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
   function write(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function numOrNull(v){return (typeof v==="number" && !isNaN(v)) ? v : null;}
 
   // ---- draft ----
+  function applyData(d){
+    FIELDS.forEach(function(f){areas[f].value=d[f]||"";});
+    SLIDERS.forEach(function(k){state[k]=numOrNull(d[k]);});
+    state.distortions=Array.isArray(d.distortions)?d.distortions.slice():[];
+    SLIDERS.forEach(renderSlider); renderChips(); renderCompare();
+  }
   function loadDraft(){
     var d=read(KEY_DRAFT,{});
-    FIELDS.forEach(function(f){areas[f].value=d[f]||"";});
+    applyData(d);
     dateInput.value=d.date||todayStr();
     refreshNodes();
   }
-  function saveDraft(){
+  function collect(){
     var d={date:dateInput.value};
     FIELDS.forEach(function(f){d[f]=areas[f].value;});
-    write(KEY_DRAFT,d);
+    SLIDERS.forEach(function(k){d[k]=state[k];});
+    d.distortions=state.distortions.slice();
+    return d;
   }
+  function saveDraft(){ write(KEY_DRAFT,collect()); }
+
   function refreshNodes(){
-    FIELDS.forEach(function(f){
-      steps[f].classList.toggle("filled", areas[f].value.trim().length>0);
+    stepEls.forEach(function(s){
+      var filled=false;
+      s.querySelectorAll("textarea[data-field]").forEach(function(t){ if(t.value.trim()) filled=true; });
+      s.querySelectorAll("input[data-slider]").forEach(function(r){ if(state[r.dataset.slider]!==null) filled=true; });
+      if(s.querySelector("#chips") && state.distortions.length) filled=true;
+      s.classList.toggle("filled",filled);
     });
   }
 
@@ -362,6 +539,7 @@
     lines.push("・私が自分の痛みや感情を受け入れている記述を、『甘え』『逃げ』『都合のいい解釈』と分類しないでください。感情そのものは点検の対象ではありません。");
     lines.push("・指摘してよいのは、感情そのものではなく、思考の扱い方に歪みがあるときだけです（例：自己批判、自分の痛みの過小評価、不都合からの回避、他者との比較による自己否定）。");
     lines.push("・補うべき点が見当たらないときは、無理に問題を作らず『特に補う点はない』と返してください。粗探しを目的化しないでください。");
+    lines.push("・「浮かんだ考え」「思考のクセ」「事実」の欄がある場合は、認知行動療法の視点も使ってかまいません。ただし考えを正すことを目的にせず、責めずに一緒に眺める姿勢でお願いします。思考のクセは私が自分で選んだもので、採点は不要です。");
     lines.push("");
     lines.push("お願い：");
     lines.push("・まず私の感情を否定せず受けとめてください。安易な励ましや『もっと前向きに』は要りません。");
@@ -369,10 +547,25 @@
     lines.push("・そのうえで、私が見落としている視点や、自分にかけられる言葉を一緒に探してください。");
     lines.push("");
     lines.push("【私のジャーナル】");
-    FIELDS.forEach(function(f){
-      var v=areas[f].value.trim();
-      if(v){ lines.push("■ "+LABELS[f]); lines.push(v); lines.push(""); }
-    });
+
+    function add(label,val){ if(val){ lines.push("■ "+label); lines.push(val); lines.push(""); } }
+    add(LABELS.event, areas.event.value.trim());
+    var em=areas.emotion.value.trim();
+    if(state.intensityBefore!==null) em+=(em?"\n":"")+"（強さ："+state.intensityBefore+" / 100）";
+    add(LABELS.emotion, em);
+    add(LABELS.thought, areas.thought.value.trim());
+    if(state.distortions.length){
+      add(LABELS.distortions, state.distortions.map(function(id){return DIST_NAME[id]||id;}).join("、"));
+    }
+    add(LABELS.common, areas.common.value.trim());
+    add(LABELS.evidenceFor, areas.evidenceFor.value.trim());
+    add(LABELS.evidenceAgainst, areas.evidenceAgainst.value.trim());
+    add(LABELS.balance, areas.balance.value.trim());
+    add(LABELS.kindness, areas.kindness.value.trim());
+    if(state.intensityAfter!==null){
+      var t=(state.intensityBefore!==null ? "書く前 "+state.intensityBefore+" → " : "")+"書いた後 "+state.intensityAfter+"（/100）";
+      add(LABELS.intensityAfter, t);
+    }
     lines.push("（記録日："+fmtDate(dateInput.value)+"）");
     return lines.join("\n");
   }
@@ -405,8 +598,8 @@
       return;
     }
     var entries=read(KEY_ENTRIES,[]);
-    var e={id:Date.now(),date:dateInput.value};
-    FIELDS.forEach(function(f){e[f]=areas[f].value.trim();});
+    var e=collect(); e.id=Date.now();
+    FIELDS.forEach(function(f){e[f]=(e[f]||"").trim();});
     entries.unshift(e);
     write(KEY_ENTRIES,entries);
     renderHistory();
@@ -416,7 +609,7 @@
   // ---- clear ----
   document.getElementById("clearBtn").addEventListener("click",function(){
     if(!confirm("入力中の内容を消去します。よろしいですか？（保存済みの記録は消えません）")) return;
-    FIELDS.forEach(function(f){areas[f].value="";});
+    applyData({});
     dateInput.value=todayStr();
     refreshNodes(); saveDraft();
     showToast("クリアしました");
@@ -436,8 +629,14 @@
       var div=document.createElement("div");
       div.className="entry";
       var snip=(e.event||"").replace(/\n/g," ");
-      var aiBadge=e.aiResponse?'<span style="font-size:10px;background:var(--ai-soft);color:var(--ai);border-radius:20px;padding:1px 7px;margin-left:6px;vertical-align:middle;">AI返答あり</span>':'';
-      div.innerHTML='<div class="e-date">'+fmtDate(e.date)+aiBadge+'</div><div class="e-snip"></div>';
+      var badges="";
+      if(numOrNull(e.intensityBefore)!==null && numOrNull(e.intensityAfter)!==null){
+        badges+='<span style="font-size:10px;background:var(--accent-soft);color:var(--accent);border-radius:20px;padding:1px 7px;margin-left:6px;vertical-align:middle;">'+e.intensityBefore+'→'+e.intensityAfter+'</span>';
+      }
+      if(e.aiResponse){
+        badges+='<span style="font-size:10px;background:var(--ai-soft);color:var(--ai);border-radius:20px;padding:1px 7px;margin-left:6px;vertical-align:middle;">AI返答あり</span>';
+      }
+      div.innerHTML='<div class="e-date">'+fmtDate(e.date)+badges+'</div><div class="e-snip"></div>';
       div.querySelector(".e-snip").textContent=snip;
       div.addEventListener("click",function(){openModal(e);});
       histList.appendChild(div);
@@ -446,21 +645,30 @@
 
   // ---- modal ----
   var overlay=document.getElementById("overlay"), modal=document.getElementById("modal");
+  function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML;}
   function openModal(e){
     var html='<h3>記録の詳細</h3><div class="m-date">'+fmtDate(e.date)+'</div>';
-    FIELDS.forEach(function(f){
-      if(e[f]){
-        var body=document.createElement("div");
-        body.textContent=e[f];
-        if(f==="aiResponse"){
-          html+='<div class="m-field" style="background:var(--ai-soft);border-radius:10px;padding:10px 12px;margin-bottom:14px;">'+
-            '<div class="m-label" style="color:var(--ai);">'+LABELS[f]+'</div>'+
-            '<div class="m-body" style="font-size:14px;">'+body.innerHTML+'</div></div>';
-        }else{
-          html+='<div class="m-field"><div class="m-label">'+LABELS[f]+'</div><div class="m-body">'+body.innerHTML+'</div></div>';
-        }
-      }
-    });
+    function field(label,val){
+      if(val) html+='<div class="m-field"><div class="m-label">'+label+'</div><div class="m-body">'+esc(val)+'</div></div>';
+    }
+    field(LABELS.event,e.event);
+    field(LABELS.emotion,e.emotion);
+    if(numOrNull(e.intensityBefore)!==null) field(LABELS.intensityBefore, e.intensityBefore+" / 100");
+    field(LABELS.thought,e.thought);
+    if(Array.isArray(e.distortions)&&e.distortions.length){
+      field(LABELS.distortions, e.distortions.map(function(id){return DIST_NAME[id]||id;}).join("、"));
+    }
+    field(LABELS.common,e.common);
+    field(LABELS.evidenceFor,e.evidenceFor);
+    field(LABELS.evidenceAgainst,e.evidenceAgainst);
+    field(LABELS.balance,e.balance);
+    field(LABELS.kindness,e.kindness);
+    if(numOrNull(e.intensityAfter)!==null) field(LABELS.intensityAfter, e.intensityAfter+" / 100");
+    if(e.aiResponse){
+      html+='<div class="m-field" style="background:var(--ai-soft);border-radius:10px;padding:10px 12px;margin-bottom:14px;">'+
+        '<div class="m-label" style="color:var(--ai);">'+LABELS.aiResponse+'</div>'+
+        '<div class="m-body" style="font-size:14px;">'+esc(e.aiResponse)+'</div></div>';
+    }
     html+='<div class="modal-actions">'+
       '<button class="btn-load">編集に読み込む</button>'+
       '<button class="btn-del">削除</button>'+
@@ -468,7 +676,7 @@
     modal.innerHTML=html;
     modal.querySelector(".btn-load").addEventListener("click",function(){
       dateInput.value=e.date;
-      FIELDS.forEach(function(f){areas[f].value=e[f]||"";});
+      applyData(e);
       refreshNodes(); saveDraft(); closeModal();
       window.scrollTo({top:0,behavior:"smooth"});
       showToast("編集欄に読み込みました");
