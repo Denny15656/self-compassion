@@ -144,6 +144,11 @@
   }
   .chip:hover{border-color:var(--accent);color:var(--ink);}
   .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);}
+  .chip.personal:hover{border-color:var(--warm);}
+  .chip.personal[aria-pressed="true"]{background:var(--warm-soft);border-color:var(--warm);color:var(--ink);}
+  .pattern-tip{font-size:12px;color:var(--muted);margin:8px 0 0;min-height:1em;}
+  .pattern-tip p{margin:2px 0;}
+  .pattern-tip b{color:var(--warm);font-weight:500;}
   .chip:focus-visible,.sclear:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
   /* Actions */
@@ -263,7 +268,7 @@
       </div>
     </section>
 
-    <!-- Step 3 (new) -->
+    <!-- Step 3 -->
     <section class="step" data-step="3">
       <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <div class="card">
@@ -275,6 +280,11 @@
         <div class="sublabel">思考のクセ <span class="opt">任意</span></div>
         <p class="help">当てはまりそうなものがあれば選んでみましょう。なくても大丈夫です。</p>
         <div class="chips" id="chips"></div>
+
+        <div class="sublabel">自分のパターン <span class="opt">任意</span></div>
+        <p class="help">かつて自分を守ってくれた、生い立ちから来た型です。気づいて名前を呼べるだけで、少し距離が取れます。</p>
+        <div class="chips" id="chipsPersonal"></div>
+        <div class="pattern-tip" id="patternTip"></div>
       </div>
     </section>
 
@@ -319,7 +329,7 @@
       </div>
     </section>
 
-    <!-- Step 7 (new) -->
+    <!-- Step 7 -->
     <section class="step" data-step="7">
       <span class="node"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <div class="card">
@@ -389,6 +399,7 @@
     intensityBefore:"感情の強さ（書く前）",
     thought:"浮かんだ考え",
     distortions:"思考のクセ（自分で選んだもの）",
+    patterns:"自分のパターン（生い立ちから来た型・自分で選んだもの）",
     common:"他者との共通性",
     evidenceFor:"その考えを支える事実",
     evidenceAgainst:"その考えに合わない事実",
@@ -411,7 +422,23 @@
     {id:"labeling",     name:"レッテル貼り", tip:"「自分はダメな人間だ」と人ごと決める"},
     {id:"personal",     name:"全部自分のせい", tip:"自分のせいではないことまで背負う"}
   ];
-  var DIST_NAME={}; DISTORTIONS.forEach(function(d){DIST_NAME[d.id]=d.name;});
+
+  // Personal patterns rooted in my own history
+  var PATTERNS=[
+    {id:"watchman",   name:"見張り番（最悪想定）", tip:"母がいつ死ぬかわからなかった頃の、最悪を想定して破滅を防ごうとする型"},
+    {id:"godMaking",  name:"みんなを神にする", tip:"周りを母のような存在として捉え、気に入られなければ終わりと感じる型"},
+    {id:"titleShould",name:"「〜なんだから」の完璧主義", tip:"二浪だから、団長だから、TLだったから、できて当然と感じる型"}
+  ];
+
+  var DIST_NAME={}, PATTERN_IDS={}, PATTERN_TIP={};
+  DISTORTIONS.forEach(function(d){DIST_NAME[d.id]=d.name;});
+  PATTERNS.forEach(function(p){DIST_NAME[p.id]=p.name; PATTERN_IDS[p.id]=1; PATTERN_TIP[p.id]=p.tip;});
+
+  function splitSelected(list){
+    var gen=[], pat=[];
+    (list||[]).forEach(function(id){ (PATTERN_IDS[id]?pat:gen).push(id); });
+    return {gen:gen, pat:pat};
+  }
 
   var areas={}, sliderEls={}, svalEls={};
   var state={intensityBefore:null,intensityAfter:null,distortions:[]};
@@ -421,24 +448,38 @@
   document.querySelectorAll("[data-sval]").forEach(function(s){svalEls[s.dataset.sval]=s;});
   var stepEls=Array.prototype.slice.call(document.querySelectorAll(".step"));
   var chipsWrap=document.getElementById("chips");
+  var chipsPersonal=document.getElementById("chipsPersonal");
+  var patternTip=document.getElementById("patternTip");
   var compareEl=document.getElementById("compare");
   var dateInput=document.getElementById("entryDate");
 
   // ---- build chips ----
-  DISTORTIONS.forEach(function(d){
+  function buildChip(d, wrap, extraClass){
     var b=document.createElement("button");
-    b.type="button"; b.className="chip"; b.textContent=d.name;
+    b.type="button"; b.className="chip"+(extraClass?" "+extraClass:""); b.textContent=d.name;
     b.title=d.tip; b.dataset.dist=d.id; b.setAttribute("aria-pressed","false");
     b.addEventListener("click",function(){
       var i=state.distortions.indexOf(d.id);
       if(i>=0) state.distortions.splice(i,1); else state.distortions.push(d.id);
       renderChips(); refreshNodes(); saveDraft();
     });
-    chipsWrap.appendChild(b);
-  });
+    wrap.appendChild(b);
+  }
+  DISTORTIONS.forEach(function(d){buildChip(d, chipsWrap);});
+  PATTERNS.forEach(function(p){buildChip(p, chipsPersonal, "personal");});
+
   function renderChips(){
-    chipsWrap.querySelectorAll(".chip").forEach(function(c){
+    document.querySelectorAll(".chip").forEach(function(c){
       c.setAttribute("aria-pressed", state.distortions.indexOf(c.dataset.dist)>=0 ? "true":"false");
+    });
+    // show the meaning of selected personal patterns (title tooltips don't work on phones)
+    var sel=splitSelected(state.distortions).pat;
+    patternTip.innerHTML="";
+    sel.forEach(function(id){
+      var p=document.createElement("p");
+      var b=document.createElement("b"); b.textContent=DIST_NAME[id];
+      p.appendChild(b); p.appendChild(document.createTextNode("：" + PATTERN_TIP[id]));
+      patternTip.appendChild(p);
     });
   }
 
@@ -531,6 +572,7 @@
     return REQUIRED.filter(function(f){return areas[f].value.trim()==="";});
   }
   function buildAIText(){
+    var sel=splitSelected(state.distortions);
     var lines=[];
     lines.push("あなたはセルフコンパッション（自分への思いやり）の専門コーチです。以下は私が書いたジャーナルです。クリスティン・ネフのセルフコンパッションの3要素（①自分への優しさ ②共通の人間性 ③マインドフルネス）の観点から、私の洞察を深める手助けをしてください。");
     lines.push("");
@@ -540,6 +582,9 @@
     lines.push("・指摘してよいのは、感情そのものではなく、思考の扱い方に歪みがあるときだけです（例：自己批判、自分の痛みの過小評価、不都合からの回避、他者との比較による自己否定）。");
     lines.push("・補うべき点が見当たらないときは、無理に問題を作らず『特に補う点はない』と返してください。粗探しを目的化しないでください。");
     lines.push("・「浮かんだ考え」「思考のクセ」「事実」の欄がある場合は、認知行動療法の視点も使ってかまいません。ただし考えを正すことを目的にせず、責めずに一緒に眺める姿勢でお願いします。思考のクセは私が自分で選んだもので、採点は不要です。");
+    if(sel.pat.length){
+      lines.push("・「自分のパターン」は、私の生い立ちから来た固有の型で、かつて私を守ってくれた生存戦略です。欠陥として扱わず、いまの出来事の下でその古い型が動いていることに、一緒に気づく視点で触れてください。");
+    }
     lines.push("");
     lines.push("お願い：");
     lines.push("・まず私の感情を否定せず受けとめてください。安易な励ましや『もっと前向きに』は要りません。");
@@ -554,8 +599,11 @@
     if(state.intensityBefore!==null) em+=(em?"\n":"")+"（強さ："+state.intensityBefore+" / 100）";
     add(LABELS.emotion, em);
     add(LABELS.thought, areas.thought.value.trim());
-    if(state.distortions.length){
-      add(LABELS.distortions, state.distortions.map(function(id){return DIST_NAME[id]||id;}).join("、"));
+    if(sel.gen.length){
+      add(LABELS.distortions, sel.gen.map(function(id){return DIST_NAME[id]||id;}).join("、"));
+    }
+    if(sel.pat.length){
+      add(LABELS.patterns, sel.pat.map(function(id){return "・"+DIST_NAME[id]+"："+PATTERN_TIP[id];}).join("\n"));
     }
     add(LABELS.common, areas.common.value.trim());
     add(LABELS.evidenceFor, areas.evidenceFor.value.trim());
@@ -655,8 +703,12 @@
     field(LABELS.emotion,e.emotion);
     if(numOrNull(e.intensityBefore)!==null) field(LABELS.intensityBefore, e.intensityBefore+" / 100");
     field(LABELS.thought,e.thought);
-    if(Array.isArray(e.distortions)&&e.distortions.length){
-      field(LABELS.distortions, e.distortions.map(function(id){return DIST_NAME[id]||id;}).join("、"));
+    var sel=splitSelected(Array.isArray(e.distortions)?e.distortions:[]);
+    if(sel.gen.length){
+      field(LABELS.distortions, sel.gen.map(function(id){return DIST_NAME[id]||id;}).join("、"));
+    }
+    if(sel.pat.length){
+      field("自分のパターン", sel.pat.map(function(id){return DIST_NAME[id];}).join("、"));
     }
     field(LABELS.common,e.common);
     field(LABELS.evidenceFor,e.evidenceFor);
